@@ -42,9 +42,7 @@ public class GlobalExceptionHandler {
 
         // 404 for unknown routes
         app.error(404, ctx -> {
-            if (ctx.resultString() == null || ctx.resultString().contains("Not Found")) {
-                ctx.json(new ErrorResponse("Endpoint not found: " + ctx.method() + " " + ctx.path()));
-            }
+            ctx.json(new ErrorResponse("Endpoint not found: " + ctx.method() + " " + ctx.path()));
         });
     }
 

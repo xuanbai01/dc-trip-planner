@@ -60,7 +60,6 @@ public class TripPlannerService {
 
         for (int i = 1; i <= numDays; i++) {
             int dayOffset = i - 1;
-            int dayOffset = i - 1;
             List<Itinerary.TimeBlock> blocks = strategy.buildDaySchedule(
                     remainingCandidates,
                     request,
