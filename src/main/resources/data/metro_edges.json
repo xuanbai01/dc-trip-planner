@@ -1,0 +1,31 @@
+[
+  { "from": "union_station",  "to": "judiciary_sq",   "travelTimeMinutes": 2,  "fare": 2.25 },
+  { "from": "judiciary_sq",   "to": "union_station",  "travelTimeMinutes": 2,  "fare": 2.25 },
+
+  { "from": "judiciary_sq",   "to": "gallery_place",  "travelTimeMinutes": 2,  "fare": 2.25 },
+  { "from": "gallery_place",  "to": "judiciary_sq",   "travelTimeMinutes": 2,  "fare": 2.25 },
+
+  { "from": "gallery_place",  "to": "metro_center",   "travelTimeMinutes": 2,  "fare": 2.25 },
+  { "from": "metro_center",   "to": "gallery_place",  "travelTimeMinutes": 2,  "fare": 2.25 },
+
+  { "from": "gallery_place",  "to": "archives",       "travelTimeMinutes": 2,  "fare": 2.25 },
+  { "from": "archives",       "to": "gallery_place",  "travelTimeMinutes": 2,  "fare": 2.25 },
+
+  { "from": "archives",       "to": "l_enfant_plaza", "travelTimeMinutes": 2,  "fare": 2.25 },
+  { "from": "l_enfant_plaza", "to": "archives",       "travelTimeMinutes": 2,  "fare": 2.25 },
+
+  { "from": "metro_center",   "to": "smithsonian",    "travelTimeMinutes": 3,  "fare": 2.25 },
+  { "from": "smithsonian",    "to": "metro_center",   "travelTimeMinutes": 3,  "fare": 2.25 },
+
+  { "from": "smithsonian",    "to": "l_enfant_plaza", "travelTimeMinutes": 2,  "fare": 2.25 },
+  { "from": "l_enfant_plaza", "to": "smithsonian",    "travelTimeMinutes": 2,  "fare": 2.25 },
+
+  { "from": "metro_center",   "to": "foggy_bottom",   "travelTimeMinutes": 6,  "fare": 2.25 },
+  { "from": "foggy_bottom",   "to": "metro_center",   "travelTimeMinutes": 6,  "fare": 2.25 },
+
+  { "from": "l_enfant_plaza", "to": "capitol_south",  "travelTimeMinutes": 4,  "fare": 2.25 },
+  { "from": "capitol_south",  "to": "l_enfant_plaza", "travelTimeMinutes": 4,  "fare": 2.25 },
+
+  { "from": "capitol_south",  "to": "union_station",  "travelTimeMinutes": 5,  "fare": 2.25 },
+  { "from": "union_station",  "to": "capitol_south",  "travelTimeMinutes": 5,  "fare": 2.25 }
+]

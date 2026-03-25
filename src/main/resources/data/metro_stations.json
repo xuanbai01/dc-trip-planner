@@ -1,0 +1,11 @@
+[
+  { "id": "union_station",   "name": "Union Station",    "lines": ["red"],                        "latitude": 38.8974, "longitude": -77.0066 },
+  { "id": "capitol_south",   "name": "Capitol South",    "lines": ["blue","orange","silver"],     "latitude": 38.8851, "longitude": -77.0055 },
+  { "id": "l_enfant_plaza",  "name": "L'Enfant Plaza",   "lines": ["blue","orange","silver","green","yellow"], "latitude": 38.8845, "longitude": -77.0215 },
+  { "id": "smithsonian",     "name": "Smithsonian",      "lines": ["blue","orange","silver"],     "latitude": 38.8888, "longitude": -77.0282 },
+  { "id": "metro_center",    "name": "Metro Center",     "lines": ["red","blue","orange","silver"], "latitude": 38.8983, "longitude": -77.0280 },
+  { "id": "gallery_place",   "name": "Gallery Place",    "lines": ["red","green","yellow"],       "latitude": 38.8972, "longitude": -77.0220 },
+  { "id": "archives",        "name": "Archives",         "lines": ["green","yellow"],             "latitude": 38.8934, "longitude": -77.0215 },
+  { "id": "judiciary_sq",    "name": "Judiciary Square", "lines": ["red"],                        "latitude": 38.8962, "longitude": -77.0059 },
+  { "id": "foggy_bottom",    "name": "Foggy Bottom",     "lines": ["blue","orange","silver"],     "latitude": 38.9001, "longitude": -77.0502 }
+]
