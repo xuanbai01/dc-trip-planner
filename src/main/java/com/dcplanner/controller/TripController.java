@@ -39,6 +39,7 @@ public class TripController {
         }
 
         try {
+            TripRequestValidator.validate(request);
             Itinerary itinerary = tripPlannerService.planTrip(request);
             ctx.json(itinerary);
         } catch (IllegalArgumentException e) {

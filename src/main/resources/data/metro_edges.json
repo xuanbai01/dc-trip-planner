@@ -26,6 +26,12 @@
   { "from": "l_enfant_plaza", "to": "capitol_south",  "travelTimeMinutes": 4,  "fare": 2.25 },
   { "from": "capitol_south",  "to": "l_enfant_plaza", "travelTimeMinutes": 4,  "fare": 2.25 },
 
+  { "from": "capitol_south",  "to": "eastern_market", "travelTimeMinutes": 3,  "fare": 2.25 },
+  { "from": "eastern_market", "to": "capitol_south",  "travelTimeMinutes": 3,  "fare": 2.25 },
+
   { "from": "capitol_south",  "to": "union_station",  "travelTimeMinutes": 5,  "fare": 2.25 },
-  { "from": "union_station",  "to": "capitol_south",  "travelTimeMinutes": 5,  "fare": 2.25 }
+  { "from": "union_station",  "to": "capitol_south",  "travelTimeMinutes": 5,  "fare": 2.25 },
+
+  { "from": "metro_center",   "to": "woodley_park",   "travelTimeMinutes": 10, "fare": 2.25 },
+  { "from": "woodley_park",   "to": "metro_center",   "travelTimeMinutes": 10, "fare": 2.25 }
 ]

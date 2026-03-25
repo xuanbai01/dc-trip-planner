@@ -4,8 +4,8 @@ import java.util.*;
 
 /**
  * Dijkstra's shortest path algorithm on the MetroGraph.
- * Returns the shortest path (by travel time) between two stations,
- * along with total time and total fare.
+ * Returns the shortest path (by travel time) between two stations.
+ * Fare is calculated once based on total path length via MetroFareCalculator.
  */
 public class Dijkstra {
 
@@ -15,12 +15,6 @@ public class Dijkstra {
         this.graph = graph;
     }
 
-    /**
-     * Find the shortest path from source to destination station.
-     *
-     * @return RouteResult containing ordered list of station IDs, total time, and total fare.
-     *         Returns empty result if no path exists.
-     */
     public RouteResult findShortestPath(String sourceId, String destinationId) {
         if (!graph.containsStation(sourceId) || !graph.containsStation(destinationId)) {
             return RouteResult.empty();
@@ -30,20 +24,16 @@ public class Dijkstra {
             return new RouteResult(List.of(sourceId), 0, 0.0);
         }
 
-        // dist[stationId] = best known travel time from source
         Map<String, Integer> dist = new HashMap<>();
-        Map<String, String> prev = new HashMap<>();      // for path reconstruction
-        Map<String, Double> fareTo = new HashMap<>();    // cumulative fare
+        Map<String, String> prev = new HashMap<>();
 
         for (String id : graph.getAllStationIds()) {
             dist.put(id, Integer.MAX_VALUE);
-            fareTo.put(id, 0.0);
         }
         dist.put(sourceId, 0);
 
-        // Priority queue ordered by travel time
         PriorityQueue<NodeEntry> pq = new PriorityQueue<>(Comparator.comparingInt(n -> n.time));
-        pq.offer(new NodeEntry(sourceId, 0, 0.0));
+        pq.offer(new NodeEntry(sourceId, 0));
 
         Set<String> visited = new HashSet<>();
 
@@ -61,22 +51,20 @@ public class Dijkstra {
                 int newDist = current.time + neighbor.getTravelTimeMinutes();
                 if (newDist < dist.get(neighbor.getTargetStation())) {
                     dist.put(neighbor.getTargetStation(), newDist);
-                    fareTo.put(neighbor.getTargetStation(), current.fare + neighbor.getFare());
                     prev.put(neighbor.getTargetStation(), current.stationId);
-                    pq.offer(new NodeEntry(neighbor.getTargetStation(), newDist, current.fare + neighbor.getFare()));
+                    pq.offer(new NodeEntry(neighbor.getTargetStation(), newDist));
                 }
             }
         }
 
         if (dist.get(destinationId) == Integer.MAX_VALUE) {
-            return RouteResult.empty(); // no path found
+            return RouteResult.empty();
         }
 
-        return new RouteResult(
-                reconstructPath(prev, sourceId, destinationId),
-                dist.get(destinationId),
-                fareTo.get(destinationId)
-        );
+        List<String> path = reconstructPath(prev, sourceId, destinationId);
+        double fare = MetroFareCalculator.calculate(path.size());
+
+        return new RouteResult(path, dist.get(destinationId), fare);
     }
 
     private List<String> reconstructPath(Map<String, String> prev, String source, String destination) {
@@ -86,24 +74,19 @@ public class Dijkstra {
             path.addFirst(current);
             current = prev.get(current);
         }
-        // Verify path starts from source (guard against disconnected graph)
         if (!path.getFirst().equals(source)) {
             return Collections.emptyList();
         }
         return path;
     }
 
-    // --- Inner classes ---
-
     private static class NodeEntry {
         final String stationId;
         final int time;
-        final double fare;
 
-        NodeEntry(String stationId, int time, double fare) {
+        NodeEntry(String stationId, int time) {
             this.stationId = stationId;
             this.time = time;
-            this.fare = fare;
         }
     }
 

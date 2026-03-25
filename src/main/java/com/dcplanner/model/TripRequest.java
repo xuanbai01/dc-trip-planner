@@ -7,7 +7,8 @@ import java.util.List;
 public class TripRequest {
 
     private StartLocation startLocation;
-    private String tripDuration;        // "half_day", "1_day", "2_days"
+    private String tripDuration;
+    private String tripStartDate;       // "YYYY-MM-DD" e.g. "2026-03-29"
     private TimeWindow availableTimePerDay;
     private Preferences preferences;
 
@@ -15,11 +16,13 @@ public class TripRequest {
 
     public StartLocation getStartLocation() { return startLocation; }
     public String getTripDuration() { return tripDuration; }
+    public String getTripStartDate() { return tripStartDate; }
     public TimeWindow getAvailableTimePerDay() { return availableTimePerDay; }
     public Preferences getPreferences() { return preferences; }
 
     public void setStartLocation(StartLocation startLocation) { this.startLocation = startLocation; }
     public void setTripDuration(String tripDuration) { this.tripDuration = tripDuration; }
+    public void setTripStartDate(String tripStartDate) { this.tripStartDate = tripStartDate; }
     public void setAvailableTimePerDay(TimeWindow availableTimePerDay) { this.availableTimePerDay = availableTimePerDay; }
     public void setPreferences(Preferences preferences) { this.preferences = preferences; }
 

@@ -17,16 +17,15 @@ import java.util.*;
  */
 public class MinimizeTravelTimeStrategy implements OptimizationStrategy {
 
-    // Assume Saturday for simplicity; in a future iteration pass actual day
-    private static final String DEFAULT_DAY = "saturday";
-
     @Override
     public List<Itinerary.TimeBlock> buildDaySchedule(
             List<Attraction> candidates,
             TripRequest request,
             Dijkstra dijkstra,
-            String dayStartStation
+            String dayStartStation,
+            int dayOffset
     ) {
+        String dayOfWeek = DateUtils.resolveDayOfWeek(request, dayOffset);
         List<Itinerary.TimeBlock> schedule = new ArrayList<>();
         Set<String> visited = new HashSet<>();
 
@@ -44,15 +43,13 @@ public class MinimizeTravelTimeStrategy implements OptimizationStrategy {
 
                 String destStation = candidate.getNearestMetroStation();
                 int travelMinutes = ScheduleUtils.getTravelMinutes(dijkstra, currentStation, destStation);
-
-                if (travelMinutes == 999) continue; // unreachable
+                if (travelMinutes == 999) continue;
 
                 LocalTime arrivalTime = currentTime.plusMinutes(travelMinutes);
                 LocalTime departureTime = arrivalTime.plusMinutes(candidate.getEstimatedVisitDurationMinutes());
 
-                if (departureTime.isAfter(endTime)) continue; // doesn't fit
-
-                if (!ScheduleUtils.isOpen(candidate, DEFAULT_DAY, arrivalTime, departureTime)) continue;
+                if (departureTime.isAfter(endTime)) continue;
+                if (!ScheduleUtils.isOpen(candidate, dayOfWeek, arrivalTime, departureTime)) continue;
 
                 if (travelMinutes < bestTravelTime) {
                     bestTravelTime = travelMinutes;
@@ -61,7 +58,7 @@ public class MinimizeTravelTimeStrategy implements OptimizationStrategy {
                 }
             }
 
-            if (best == null) break; // nothing more fits
+            if (best == null) break;
 
             LocalTime arrivalTime = currentTime.plusMinutes(bestTravelTime);
             schedule.add(ScheduleUtils.buildTimeBlock(best, arrivalTime, bestRoute));

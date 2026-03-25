@@ -9,6 +9,7 @@ import com.dcplanner.service.AttractionService;
 import com.dcplanner.service.CostService;
 import com.dcplanner.service.RouteService;
 import com.dcplanner.service.TripPlannerService;
+import com.dcplanner.controller.GlobalExceptionHandler;
 import io.javalin.Javalin;
 
 public class Main {
@@ -40,6 +41,9 @@ public class Main {
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
         }).start(7070);
+
+        // Register global exception handlers
+        GlobalExceptionHandler.register(app);
 
         // Register routes
         attractionController.registerRoutes(app);

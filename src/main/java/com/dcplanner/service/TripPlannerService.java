@@ -59,11 +59,14 @@ public class TripPlannerService {
         List<Attraction> remainingCandidates = new ArrayList<>(candidates);
 
         for (int i = 1; i <= numDays; i++) {
+            int dayOffset = i - 1;
+            int dayOffset = i - 1;
             List<Itinerary.TimeBlock> blocks = strategy.buildDaySchedule(
                     remainingCandidates,
                     request,
                     routeService.getDijkstra(),
-                    startStation
+                    startStation,
+                    dayOffset
             );
 
             days.add(new Itinerary.Day(i, blocks));

@@ -13,19 +13,18 @@ import java.util.*;
  *
  * Scores each candidate attraction by preference match and travel cost,
  * then greedily selects the highest-scoring attraction that fits in the time window.
- * Prefers attractions with shorter visit durations to fit more stops in a day.
  */
 public class MaximizeAttractionsStrategy implements OptimizationStrategy {
-
-    private static final String DEFAULT_DAY = "saturday";
 
     @Override
     public List<Itinerary.TimeBlock> buildDaySchedule(
             List<Attraction> candidates,
             TripRequest request,
             Dijkstra dijkstra,
-            String dayStartStation
+            String dayStartStation,
+            int dayOffset
     ) {
+        String dayOfWeek = DateUtils.resolveDayOfWeek(request, dayOffset);
         List<Itinerary.TimeBlock> schedule = new ArrayList<>();
         Set<String> visited = new HashSet<>();
 
@@ -54,7 +53,7 @@ public class MaximizeAttractionsStrategy implements OptimizationStrategy {
                 LocalTime departureTime = arrivalTime.plusMinutes(candidate.getEstimatedVisitDurationMinutes());
 
                 if (departureTime.isAfter(endTime)) continue;
-                if (!ScheduleUtils.isOpen(candidate, DEFAULT_DAY, arrivalTime, departureTime)) continue;
+                if (!ScheduleUtils.isOpen(candidate, dayOfWeek, arrivalTime, departureTime)) continue;
 
                 double score = scoreAttraction(candidate, preferredTypes, travelMinutes);
 
@@ -78,16 +77,9 @@ public class MaximizeAttractionsStrategy implements OptimizationStrategy {
         return schedule;
     }
 
-    /**
-     * Score an attraction higher if:
-     * - Its type matches user preferences (+50)
-     * - It has a shorter visit duration (more stops fit) (+bonus for short visits)
-     * - It has lower travel time from current position (penalize long travel)
-     */
     private double scoreAttraction(Attraction attraction, List<String> preferredTypes, int travelMinutes) {
         double score = 0;
 
-        // Type preference bonus
         if (preferredTypes != null && !preferredTypes.isEmpty()) {
             String typeName = attraction.getType().name().toLowerCase();
             if (preferredTypes.stream().anyMatch(t -> t.equalsIgnoreCase(typeName))) {
@@ -95,7 +87,7 @@ public class MaximizeAttractionsStrategy implements OptimizationStrategy {
             }
         }
 
-        // Prefer shorter visit durations (more stops)
+        // Prefer shorter visit durations (fit more stops)
         score += Math.max(0, 120 - attraction.getEstimatedVisitDurationMinutes());
 
         // Penalize long travel

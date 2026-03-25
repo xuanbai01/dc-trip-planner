@@ -1,5 +1,6 @@
 package com.dcplanner.repository;
 
+import com.dcplanner.factory.AttractionFactory;
 import com.dcplanner.model.Attraction;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +28,10 @@ public class AttractionRepository {
                 System.err.println("attractions.json not found in resources/data/");
                 return Collections.emptyList();
             }
-            return mapper.readValue(is, new TypeReference<List<Attraction>>() {});
+            List<Attraction> raw = mapper.readValue(is, new TypeReference<List<Attraction>>() {});
+            return raw.stream()
+                      .map(AttractionFactory::fromJson)
+                      .collect(java.util.stream.Collectors.toList());
         } catch (Exception e) {
             throw new RuntimeException("Failed to load attractions.json", e);
         }
