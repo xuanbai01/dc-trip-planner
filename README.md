@@ -9,7 +9,7 @@ A Java-based trip planning application that helps users design optimized half-da
 | Name | Role | Responsibilities |
 |---|---|---|
 | Shawn | Backend | Routing algorithm, itinerary generation, REST API |
-| [Teammate] | Frontend | Java Swing UI, map view |
+| Xiang | Frontend | React UI, map view |
 
 ---
 
@@ -17,8 +17,8 @@ A Java-based trip planning application that helps users design optimized half-da
 
 ```
 ┌─────────────────────────────────────┐
-│         Java Swing Frontend          │
-│   [Trip form, itinerary view, map]   │
+│         React Frontend              │
+│   [Trip form, itinerary view, map]  │
 └────────────────┬────────────────────┘
                  │ HTTP
 ┌────────────────▼────────────────────┐
@@ -45,7 +45,7 @@ A Java-based trip planning application that helps users design optimized half-da
 | Layer | Technology |
 |---|---|
 | Language | Java 17 |
-| Frontend | Java Swing *(in progress)* |
+| Frontend | React  |
 | REST Server | Javalin 6 |
 | JSON Parsing | Jackson |
 | Build Tool | Maven |
