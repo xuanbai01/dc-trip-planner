@@ -11,6 +11,7 @@ A Java-based trip planning application that helps users design optimized half-da
 | Shawn | Backend | Routing algorithm, itinerary generation, REST API |
 | Xiang | Frontend | React UI, map view, user interaction |
 
+
 ---
 
 ## Architecture Overview
