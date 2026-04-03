@@ -9,7 +9,7 @@ A Java-based trip planning application that helps users design optimized half-da
 | Name | Role | Responsibilities |
 |---|---|---|
 | Shawn | Backend | Routing algorithm, itinerary generation, REST API |
-| [Teammate] | Frontend | Java Swing UI, map view |
+| Xiang | Frontend | React UI, map view, user interaction |
 
 ---
 
@@ -17,8 +17,10 @@ A Java-based trip planning application that helps users design optimized half-da
 
 ```
 ┌─────────────────────────────────────┐
-│         Java Swing Frontend          │
-│   [Trip form, itinerary view, map]   │
+│        React + Vite Frontend         │
+│  [Trip form, attraction picker,      │
+│   Leaflet map, itinerary view]       │
+│       (localhost:5173)               │
 └────────────────┬────────────────────┘
                  │ HTTP
 ┌────────────────▼────────────────────┐
@@ -44,33 +46,36 @@ A Java-based trip planning application that helps users design optimized half-da
 
 | Layer | Technology |
 |---|---|
-| Language | Java 17 |
-| Frontend | Java Swing *(in progress)* |
+| Language | Java 17, JavaScript |
+| Frontend | React + Vite |
+| Map | Leaflet + OpenStreetMap |
 | REST Server | Javalin 6 |
 | JSON Parsing | Jackson |
 | Build Tool | Maven |
-| Map View | JXMapViewer2 *(planned)* |
 | Database | Static JSON files |
 
 ---
 
 ## Getting Started
 
-**Prerequisites:** Java 17+, Maven 3.6+
+**Prerequisites:** Java 17+, Maven 3.6+, Node.js 18+
 
 ```bash
 # Clone the repo
 git clone https://github.com/xuanbai01/dc-trip-planner.git
 cd dc-trip-planner
 
-# Build
-mvn compile
-
-# Run the backend server
+# Start backend:
+bashmvn compile
 mvn exec:java -Dexec.mainClass="com.dcplanner.Main"
-```
+Backend starts on http://localhost:7070.
 
-Backend starts on `http://localhost:7070`.
+#Start frontend
+cd frontend
+npm install
+npm run dev
+Frontend starts on http://localhost:5173
+```
 
 > **Frontend:** Instructions will be added once the Swing UI is implemented.
 
@@ -79,6 +84,7 @@ Backend starts on `http://localhost:7070`.
 ## Features
 
 ### Implemented
+backend(Shawn)
 - REST API with 7 endpoints
 - Metro routing via Dijkstra's algorithm on a weighted graph
 - Day-by-day itinerary generation with time blocks
@@ -90,15 +96,16 @@ Backend starts on `http://localhost:7070`.
 - 30 pre-curated DC attractions across 4 categories
 - Input validation and centralized error handling
 
-### In Progress
-- Java Swing frontend UI
-- Interactive map with attraction pins (JXMapViewer2)
-
-### Planned
-- User-facing trip form (start station, date, time, preferences)
-- Itinerary display panel with time blocks
-- Printable/exportable trip summary
-
+frontend(Xiang)
+- Trip setup form with station, duration, date, time, and preference selection
+- Interactive attraction picker with type filtering, free-only filter, and accessibility filter
+- Click-to-select attractions with visual feedback and collapsible panel
+- Auto-plan mode (by preferences) and manual mode (by selected attractions)
+- Leaflet map with emoji markers, numbered stops, route polyline, and start station
+- Day-by-day itinerary display with time blocks
+- Cost breakdown summary (Metro fares + entrance fees)
+- Auto-scroll to results after planning
+- Responsive design for desktop and mobile
 ---
 
 ## Project Structure
@@ -108,28 +115,44 @@ dc-trip-planner/
 ├── pom.xml
 ├── README.md
 └── src/
-    ├── main/
-    │   ├── java/com/dcplanner/
-    │   │   ├── Main.java                  # Entry point, server bootstrap
-    │   │   ├── algorithm/                 # MetroGraph, Dijkstra, MetroFareCalculator
-    │   │   ├── controller/                # REST route handlers, validation, error handling
-    │   │   ├── factory/                   # AttractionFactory (Factory pattern)
-    │   │   ├── model/                     # POJOs: Attraction, Itinerary, TripRequest, ...
-    │   │   ├── repository/                # JSON file loaders
-    │   │   ├── service/                   # Business logic layer
-    │   │   └── strategy/                  # Optimization strategies (Strategy pattern)
-    │   └── resources/data/
-    │       ├── attractions.json           # 30 DC attractions
-    │       ├── metro_stations.json        # 11 Metro stations
-    │       └── metro_edges.json           # Bidirectional travel time graph
-    └── test/
-        └── java/com/dcplanner/
-            ├── algorithm/                 # DijkstraTest, MetroFareCalculatorTest
-            ├── controller/                # TripRequestValidatorTest
-            ├── factory/                   # AttractionFactoryTest
-            └── service/                   # TripPlannerServiceTest
+│    ├── main/
+│    │   ├── java/com/dcplanner/
+│    │   │   ├── Main.java                  # Entry point, server bootstrap
+│    │   │   ├── algorithm/                 # MetroGraph, Dijkstra, MetroFareCalculator
+│    │   │   ├── controller/                # REST route handlers, validation, error handling
+│    │   │   ├── factory/                   # AttractionFactory (Factory pattern)
+│    │   │   ├── model/                     # POJOs: Attraction, Itinerary, TripRequest, ...
+│    │   │   ├── repository/                # JSON file loaders
+│    │   │   ├── service/                   # Business logic layer
+│    │   │   └── strategy/                  # Optimization strategies (Strategy pattern)
+│    │   └── resources/data/
+│    │       ├── attractions.json           # 30 DC attractions
+│    │       ├── metro_stations.json        # 11 Metro stations
+│    │       └── metro_edges.json           # Bidirectional travel time graph
+│    └── test/
+│        └── java/com/dcplanner/
+│            ├── algorithm/                 # DijkstraTest, MetroFareCalculatorTest
+│            ├── controller/                # TripRequestValidatorTest
+│            ├── factory/                   # AttractionFactoryTest
+│            └── service/                   # TripPlannerServiceTest
+│
+└── frontend/                              
+    ├── package.json
+    ├── vite.config.js
+    └── src/
+        ├── App.jsx                        # Main app, state management
+        ├── App.css                        # Global styles
+        ├── assets/                        # Background image
+        ├── components/
+        │   ├── TripForm.jsx               # Search bar with trip preferences
+        │   ├── AttractionPicker.jsx       # Clickable attraction cards
+        │   ├── MapView.jsx                # Leaflet map with route display
+        │   ├── Itinerary.jsx              # Day-by-day time blocks
+        │   ├── Cost.jsx                   # Cost breakdown
+        │   └── Footer.jsx                 # Credits and links
+        └── services/
+            └── api.js                     # Backend API calls
 ```
-
 ---
 
 ## Backend API Reference
@@ -257,16 +280,52 @@ mvn test
 - `TripPlannerServiceTest` — end-to-end itinerary generation
 
 ---
+## Frontend Reference
 
-## Frontend *(in progress)*
+### User Flow
 
-> This section will be updated by [Teammate] once the Swing UI is implemented.
+1. **Set Preferences** — Top search bar: select start station, 
+   duration, date, time range, attraction types, budget, strategy
+2. **Browse & Select** — Scrollable attraction cards filtered by 
+   selected types. Click to select specific destinations
+3. **Plan Trip** — Two modes:
+   - "Auto Plan": no attractions selected → calls `POST /trip/plan`
+   - "Plan N Places": attractions selected → calls `GET /trip/cost` 
+     + `GET /metro/route` for each leg
+4. **View Results** — Attraction picker collapses, page scrolls to:
+   - Route map with numbered emoji markers
+   - Day-by-day itinerary with time blocks
+   - Cost breakdown (Metro + entrance fees)
 
-Planned UI screens:
-- **Trip Setup Form** — input start station, date, time window, and preferences
-- **Itinerary View** — day-by-day time blocks with attraction details and travel info
-- **Map View** — DC map with pinned attractions using JXMapViewer2
-- **Cost Summary** — Metro fare and entrance fee breakdown
+### Components
+
+| Component | File | Purpose |
+|---|---|---|
+| TripForm | `TripForm.jsx` | Search bar with all trip preferences |
+| AttractionPicker | `AttractionPicker.jsx` | Filterable, clickable attraction cards with collapse/expand |
+| MapView | `MapView.jsx` | Leaflet map with emoji markers, route line, start station |
+| Itinerary | `Itinerary.jsx` | Time blocks showing visit order, travel time, fees |
+| Cost | `Cost.jsx` | Metro fare + entrance fee + total breakdown |
+| Footer | `Footer.jsx` | Credits and GitHub link |
+
+### API Usage by Component
+
+| Component | Endpoint Called | When |
+|---|---|---|
+| TripForm | `GET /metro/stations` | On page load, populates station dropdown |
+| AttractionPicker | `GET /attractions` | On page load, populates attraction cards |
+| App (Auto Plan) | `POST /trip/plan` | User clicks Plan with no specific selections |
+| App (Manual Plan) | `GET /trip/cost` | User clicks Plan with selected attractions |
+| App (Manual Plan) | `GET /metro/route` | Per consecutive stop pair, calculates travel time |
+
+### State Management
+
+| State | Owned By | Shared With |
+|---|---|---|
+| `selectedTypes` | App | TripForm, AttractionPicker |
+| `selectedAttractions` | App | AttractionPicker, MapView |
+| `itinerary` | App | MapView, Itinerary, Cost |
+| `pickerOpen` | App | AttractionPicker |
 
 ---
 
