@@ -1,6 +1,7 @@
 # DC Weekend Trip Planner
 
 A Java-based trip planning application that helps users design optimized half-day to 2-day itineraries in Washington DC. The system generates routes across museums, landmarks, coffee shops, and cinemas — factoring in opening hours, Metro travel time, and user preferences.
+![Frontend UI](frontend/src/assets/frontend_sreenshot.png)
 
 ---
 
@@ -290,8 +291,7 @@ mvn test
    selected types. Click to select specific destinations
 3. **Plan Trip** — Two modes:
    - "Auto Plan": no attractions selected → calls `POST /trip/plan`
-   - "Plan N Places": attractions selected → calls `GET /trip/cost` 
-     + `GET /metro/route` for each leg
+   - "Plan N Places": attractions selected → calls `GET /trip/cost` + `GET /metro/route`
 4. **View Results** — Attraction picker collapses, page scrolls to:
    - Route map with numbered emoji markers
    - Day-by-day itinerary with time blocks
