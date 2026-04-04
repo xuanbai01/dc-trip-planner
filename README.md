@@ -79,8 +79,6 @@ npm run dev
 Frontend starts on http://localhost:5173
 ```
 
-> **Frontend:** Instructions will be added once the Swing UI is implemented.
-
 ---
 
 ## Features
