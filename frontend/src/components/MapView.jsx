@@ -2,7 +2,6 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Emoji markers — no ugly blue arrows
 const emojiIcon = (emoji, size = 28) => L.divIcon({
   html: `<span style="font-size:${size}px;line-height:1">${emoji}</span>`,
   className: 'emoji-marker',
@@ -18,7 +17,6 @@ const TYPE_EMOJI = {
   CINEMA: '🎬'
 }
 
-// Metro station coordinates
 const STATION_COORDS = {
   union_station:  [38.8972, -77.0064],
   judiciary_sq:   [38.8964, -77.0167],
@@ -36,33 +34,43 @@ const STATION_COORDS = {
 const DC_CENTER = [38.8950, -77.0300]
 
 const formatStation = (id) =>
-  id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  id?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || ''
 
 export default function MapView({ itinerary }) {
   const attractions = []
 
-  if (itinerary?.selectedMode && itinerary?.attractions) {
-    itinerary.attractions.forEach(a => {
-      attractions.push({
-        name: a.name,
-        type: a.type,
-        lat: a.latitude,
-        lng: a.longitude,
-        fee: a.entranceFee,
-        duration: a.estimatedVisitDurationMinutes,
-        station: a.nearestMetroStation
-      })
-    })
-  } else if (itinerary?.days) {
+  if (itinerary?.days) {
     itinerary.days.forEach(day => {
       day.timeBlocks?.forEach(block => {
-        if (block.latitude && block.longitude) {
+        // Auto-plan: nested in block.attraction
+        // Manual: flat on block or from itinerary.attractions
+        const a = block.attraction
+        if (a?.latitude && a?.longitude) {
           attractions.push({
-            name: block.attractionName || block.activity,
-            type: block.type,
-            lat: block.latitude,
-            lng: block.longitude
+            name: a.name,
+            type: a.type,
+            lat: a.latitude,
+            lng: a.longitude,
+            fee: a.entranceFee || 0,
+            duration: a.estimatedVisitDurationMinutes,
+            station: a.nearestMetroStation
           })
+        } else if (block.attractionName) {
+          // Manual mode: find coords from itinerary.attractions
+          const found = itinerary.attractions?.find(
+            x => x.name === block.attractionName
+          )
+          if (found) {
+            attractions.push({
+              name: found.name,
+              type: found.type,
+              lat: found.latitude,
+              lng: found.longitude,
+              fee: found.entranceFee || 0,
+              duration: found.estimatedVisitDurationMinutes,
+              station: found.nearestMetroStation
+            })
+          }
         }
       })
     })
@@ -71,7 +79,8 @@ export default function MapView({ itinerary }) {
   if (attractions.length === 0) return null
 
   // Start station
-  const startStation = itinerary?.startStation
+  const startStation = itinerary?.startStation ||
+    itinerary?.days?.[0]?.timeBlocks?.[0]?.travel?.metroStations?.[0]
   const startCoord = startStation && STATION_COORDS[startStation]
 
   // Route line
@@ -95,7 +104,6 @@ export default function MapView({ itinerary }) {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {/* Start station marker */}
           {startCoord && (
             <Marker position={startCoord} icon={emojiIcon('🚇', 32)}>
               <Popup>
@@ -104,15 +112,11 @@ export default function MapView({ itinerary }) {
             </Marker>
           )}
 
-          {/* Attraction markers with number badges */}
           {attractions.map((a, i) => (
             <Marker
               key={i}
               position={[a.lat, a.lng]}
-              icon={emojiIcon(
-                `<span class="map-badge">${i + 1}</span>${TYPE_EMOJI[a.type] || '📍'}`,
-                36
-              )}
+              icon={emojiIcon(`${TYPE_EMOJI[a.type] || '📍'}`, 28)}
             >
               <Popup>
                 <strong>#{i + 1} {a.name}</strong><br />
@@ -123,7 +127,6 @@ export default function MapView({ itinerary }) {
             </Marker>
           ))}
 
-          {/* Route line */}
           {routePoints.length > 1 && (
             <Polyline
               positions={routePoints}
@@ -136,7 +139,6 @@ export default function MapView({ itinerary }) {
         </MapContainer>
       </div>
 
-      {/* Legend */}
       <div className="map-legend">
         <span className="legend-item">🚇 Start</span>
         <span className="legend-item">🏛️ Museum</span>

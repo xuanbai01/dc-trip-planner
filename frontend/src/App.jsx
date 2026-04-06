@@ -76,11 +76,22 @@ function App() {
         }
 
         let currentTime = tripRequest.availableTimePerDay.start
-        const timeBlocks = selectedAttractions.map((a, i) => {
+        const endLimit = timeToMinutes(tripRequest.availableTimePerDay.end)
+        const timeBlocks = []
+        const skipped = []
+
+        selectedAttractions.forEach((a, i) => {
           const travelMin = routes[i]?.travelTimeMinutes || 0
           const startMin = timeToMinutes(currentTime) + travelMin
           const endMin = startMin + a.estimatedVisitDurationMinutes
-          const block = {
+
+          // Skip if this attraction would exceed end time
+          if (endMin > endLimit) {
+            skipped.push(a.name)
+            return
+          }
+
+          timeBlocks.push({
             startTime: minutesToTime(startMin),
             endTime: minutesToTime(endMin),
             attractionName: a.name,
@@ -88,17 +99,20 @@ function App() {
             travelTimeMinutes: travelMin,
             entranceFee: a.entranceFee,
             nearestStation: a.nearestMetroStation
-          }
+          })
           currentTime = minutesToTime(endMin)
-          return block
         })
 
         setItinerary({
           selectedMode: true,
           days: [{ date: tripRequest.tripStartDate || 'Your Trip', timeBlocks }],
           costBreakdown: costData,
-          attractions: selectedAttractions,
-          startStation: station
+          attractions: selectedAttractions.filter(a => !skipped.includes(a.name)),
+          startStation: station,
+          totalAttractions: timeBlocks.length,
+          skippedMessage: skipped.length > 0
+            ? `⚠️ Not enough time for: ${skipped.join(', ')}`
+            : null
         })
       } else {
         const response = await fetch('http://localhost:7070/trip/plan', {
@@ -111,6 +125,7 @@ function App() {
           throw new Error(err.error || 'Failed to plan trip')
         }
         const data = await response.json()
+        data.startStation = tripRequest.startLocation.metroStation
         setItinerary(data)
       }
 
@@ -154,11 +169,14 @@ function App() {
       {error && <div className="error-banner">{error}</div>}
 
       <div ref={resultsRef}>
+        {itinerary?.skippedMessage && (
+          <div className="warning-banner">{itinerary.skippedMessage}</div>
+        )}
         {itinerary && (
           <>
+            <MapView itinerary={itinerary} />
             <Itinerary itinerary={itinerary} />
             <Cost itinerary={itinerary} />
-            <MapView itinerary={itinerary} />
           </>
         )}
       </div>

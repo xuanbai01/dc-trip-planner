@@ -185,6 +185,22 @@ body {
   font-size: 0.9rem;
 }
 
+.warning-banner {
+  background: #fff3cd;
+  color: #856404;
+  padding: 12px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.cost-note {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* ===== Attraction Picker ===== */
 .attraction-picker {
   margin-bottom: 24px;
