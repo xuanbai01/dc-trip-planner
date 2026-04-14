@@ -17,7 +17,7 @@ import java.util.Set;
 public class TripRequestValidator {
 
     private static final Set<String> VALID_DURATIONS = Set.of("half_day", "1_day", "2_days");
-    private static final Set<String> VALID_STRATEGIES = Set.of("minimize_travel_time", "maximize_attractions");
+    private static final Set<String> VALID_STRATEGIES = Set.of("minimize_travel_time", "maximize_attractions", "balanced");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 

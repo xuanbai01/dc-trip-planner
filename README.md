@@ -11,6 +11,7 @@ A Java-based trip planning application that helps users design optimized half-da
 |---|---|---|
 | Shawn | Backend | Routing algorithm, itinerary generation, REST API |
 | Xiang | Frontend | React UI, map view, user interaction |
+| Linda | Systems Enhancement | Performance metrics, balanced optimization strategy, and itinerary improvements |
 
 
 ---
@@ -88,11 +89,12 @@ backend(Shawn)
 - REST API with 7 endpoints
 - Metro routing via Dijkstra's algorithm on a weighted graph
 - Day-by-day itinerary generation with time blocks
-- Two optimization strategies: minimize travel time and maximize attractions
+- Three optimization strategies: minimize travel time, maximize attractions, and balanced (tradeoff between travel time and coverage)
 - Opening hours validation per day of week
 - Metro fare calculation based on trip distance
 - Cost breakdown: Metro fares + entrance fees
-- Attraction filtering by type, budget, and accessibility
+- Attraction filtering by type, budget, and accessibility (with soft budget overage warnings on planned itineraries)
+- Itinerary responses include execution time, total travel minutes, and attraction count
 - 30 pre-curated DC attractions across 4 categories
 - Input validation and centralized error handling
 
@@ -325,6 +327,15 @@ mvn test
 | `selectedAttractions` | App | AttractionPicker, MapView |
 | `itinerary` | App | MapView, Itinerary, Cost |
 | `pickerOpen` | App | AttractionPicker |
+
+---
+
+## Additional Contributions (Linda)
+
+- Added performance metrics on planned trips so you can see how long planning took, total travel time between stops, and how many attractions made the cut.
+- Added a **balanced** optimization mode that picks between the travel-time and max-attractions builders using a simple weighted score, so you get a middle ground without hand-tuning.
+- Relaxed the budget a bit: small overages return a **warning** on the itinerary instead of failing the request, while still blocking plans that blow the budget by too much.
+- Tightened up travel-time numbers in the itinerary by basing segment times on the actual metro path (plus the usual station-to-venue walk estimate) instead of a flat placeholder.
 
 ---
 
