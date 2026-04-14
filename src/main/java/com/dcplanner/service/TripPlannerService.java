@@ -4,6 +4,7 @@ import com.dcplanner.model.Attraction;
 import com.dcplanner.model.Itinerary;
 import com.dcplanner.model.TripRequest;
 import com.dcplanner.repository.AttractionRepository;
+import com.dcplanner.strategy.BalancedOptimizationStrategy;
 import com.dcplanner.strategy.MaximizeAttractionsStrategy;
 import com.dcplanner.strategy.MinimizeTravelTimeStrategy;
 import com.dcplanner.strategy.OptimizationStrategy;
@@ -21,6 +22,8 @@ import java.util.List;
  */
 public class TripPlannerService {
 
+    private static final double BUDGET_SOFT_HEADROOM = 0.15;
+
     private final AttractionRepository attractionRepository;
     private final AttractionService attractionService;
     private final RouteService routeService;
@@ -36,6 +39,7 @@ public class TripPlannerService {
     }
 
     public Itinerary planTrip(TripRequest request) {
+        long startTimeMs = System.currentTimeMillis();
         validateRequest(request);
 
         // 1. Filter candidates based on user preferences
@@ -79,7 +83,26 @@ public class TripPlannerService {
             }
         }
 
-        return new Itinerary(days);
+        Itinerary itinerary = new Itinerary(days);
+
+        int totalAttractions = 0;
+        int totalTravelTimeMinutes = 0;
+        for (Itinerary.Day day : days) {
+            totalAttractions += day.getTimeBlocks().size();
+            for (Itinerary.TimeBlock block : day.getTimeBlocks()) {
+                if (block.getTravel() != null) {
+                    totalTravelTimeMinutes += block.getTravel().getWalkingMinutes();
+                }
+            }
+        }
+        itinerary.setTotalAttractions(totalAttractions);
+        itinerary.setTotalTravelTimeMinutes(totalTravelTimeMinutes);
+
+        applyBudgetRules(request, itinerary);
+
+        long endTimeMs = System.currentTimeMillis();
+        itinerary.setExecutionTimeMs(endTimeMs - startTimeMs);
+        return itinerary;
     }
 
     private List<Attraction> filterCandidates(TripRequest request) {
@@ -97,7 +120,34 @@ public class TripPlannerService {
             accessibilityRequired = prefs.isAccessibilityRequired() ? true : null;
         }
 
-        return attractionRepository.findFiltered(types, maxBudget, accessibilityRequired);
+        Double maxFeeFilter = maxBudget == null ? null : maxBudget * (1.0 + BUDGET_SOFT_HEADROOM);
+        return attractionRepository.findFiltered(types, maxFeeFilter, accessibilityRequired);
+    }
+
+    private void applyBudgetRules(TripRequest request, Itinerary itinerary) {
+        Double nominalBudget = nominalMaxBudget(request);
+        if (nominalBudget == null) {
+            return;
+        }
+
+        double total = itinerary.getTotalCost();
+        double softCap = nominalBudget * (1.0 + BUDGET_SOFT_HEADROOM);
+        if (total > softCap) {
+            throw new IllegalArgumentException(String.format(
+                    "Trip cost $%.2f exceeds budget (allowed up to $%.2f with flexibility).",
+                    total, softCap));
+        }
+        if (total > nominalBudget) {
+            itinerary.getWarnings().add(String.format("Budget exceeded by $%.2f", total - nominalBudget));
+        }
+    }
+
+    private Double nominalMaxBudget(TripRequest request) {
+        if (request.getPreferences() == null) {
+            return null;
+        }
+        double b = request.getPreferences().getMaxBudget();
+        return b > 0 ? b : null;
     }
 
     private OptimizationStrategy selectStrategy(TripRequest request) {
@@ -108,6 +158,9 @@ public class TripPlannerService {
         String strategyName = request.getPreferences().getOptimizationStrategy();
         if ("maximize_attractions".equalsIgnoreCase(strategyName)) {
             return new MaximizeAttractionsStrategy();
+        }
+        if ("balanced".equalsIgnoreCase(strategyName)) {
+            return new BalancedOptimizationStrategy();
         }
 
         // Default

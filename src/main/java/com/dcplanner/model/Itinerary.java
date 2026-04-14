@@ -1,5 +1,6 @@
 package com.dcplanner.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Itinerary {
@@ -7,6 +8,9 @@ public class Itinerary {
     private List<Day> days;
     private double totalCost;
     private int totalAttractions;
+    private int totalTravelTimeMinutes;
+    private long executionTimeMs;
+    private List<String> warnings = new ArrayList<>();
 
     public Itinerary() {}
 
@@ -23,10 +27,16 @@ public class Itinerary {
     public List<Day> getDays() { return days; }
     public double getTotalCost() { return totalCost; }
     public int getTotalAttractions() { return totalAttractions; }
+    public int getTotalTravelTimeMinutes() { return totalTravelTimeMinutes; }
+    public long getExecutionTimeMs() { return executionTimeMs; }
+    public List<String> getWarnings() { return warnings; }
 
     public void setDays(List<Day> days) { this.days = days; }
     public void setTotalCost(double totalCost) { this.totalCost = totalCost; }
     public void setTotalAttractions(int totalAttractions) { this.totalAttractions = totalAttractions; }
+    public void setTotalTravelTimeMinutes(int totalTravelTimeMinutes) { this.totalTravelTimeMinutes = totalTravelTimeMinutes; }
+    public void setExecutionTimeMs(long executionTimeMs) { this.executionTimeMs = executionTimeMs; }
+    public void setWarnings(List<String> warnings) { this.warnings = warnings != null ? warnings : new ArrayList<>(); }
 
     // --- Nested: Day ---
 
