@@ -89,7 +89,7 @@ backend(Shawn)
 - REST API with 7 endpoints
 - Metro routing via Dijkstra's algorithm on a weighted graph
 - Day-by-day itinerary generation with time blocks
-- Three optimization strategies: minimize travel time, maximize attractions, and balanced (tradeoff between travel time and coverage)
+- Three optimization strategies: minimize travel time, maximize attractions, and balanced (cluster-first greedy that plans one metro station at a time, committing to a region before moving on)
 - Opening hours validation per day of week
 - Metro fare calculation based on trip distance
 - Cost breakdown: Metro fares + entrance fees
@@ -152,8 +152,7 @@ dc-trip-planner/
         │   ├── Itinerary.jsx              # Day-by-day time blocks
         │   ├── Cost.jsx                   # Cost breakdown
         │   └── Footer.jsx                 # Credits and links
-        └── services/
-            └── api.js                     # Backend API calls
+        └── api.js                         # Centralized backend API client
 ```
 ---
 
@@ -222,7 +221,7 @@ Generate a full day-by-day itinerary.
 | `preferences.types` | no | `museum`, `landmark`, `coffee_shop`, `cinema` |
 | `preferences.maxBudget` | no | Decimal USD |
 | `preferences.accessibilityRequired` | no | `true` / `false` |
-| `preferences.optimizationStrategy` | no | `minimize_travel_time`, `maximize_attractions` |
+| `preferences.optimizationStrategy` | no | `minimize_travel_time`, `maximize_attractions`, `balanced` |
 
 ### `GET /trip/cost?attractionIds={ids}&startStation={id}`
 Estimate cost for an ordered list of attraction IDs.
@@ -274,7 +273,7 @@ Estimate cost for an ordered list of attraction IDs.
 mvn test
 ```
 
-43 unit and integration tests across:
+67 unit and integration tests across:
 - `DijkstraTest` — shortest path correctness
 - `MetroFareCalculatorTest` — fare tier logic
 - `AttractionFactoryTest` — validation and normalization
@@ -333,9 +332,47 @@ mvn test
 ## Additional Contributions (Linda)
 
 - Added performance metrics on planned trips so you can see how long planning took, total travel time between stops, and how many attractions made the cut.
-- Added a **balanced** optimization mode that picks between the travel-time and max-attractions builders using a simple weighted score, so you get a middle ground without hand-tuning.
+- Added a **balanced** optimization mode. Original design ran the travel-time and max-attractions builders side by side and picked the winner by weighted score; it has since been rewritten as a **cluster-first greedy** (see section below) that commits to a metro-station region, visits all feasible attractions there, and then moves on.
 - Relaxed the budget a bit: small overages return a **warning** on the itinerary instead of failing the request, while still blocking plans that blow the budget by too much.
 - Tightened up travel-time numbers in the itinerary by basing segment times on the actual metro path (plus the usual station-to-venue walk estimate) instead of a flat placeholder.
+
+---
+
+## Optimization Strategies
+
+The `optimizationStrategy` field in `/trip/plan` selects how the day is built.
+
+### `minimize_travel_time`
+Greedy nearest-neighbor. At each step, picks the unvisited attraction reachable in the least metro travel time that still fits in the window. Ignores attraction type when choosing — it just wants you to spend as few minutes in transit as possible.
+
+### `maximize_attractions`
+Greedy by composite score. Each candidate is scored as `typeMatchBonus + durationBonus − travelPenalty`. Favors your preferred types, then shorter visits (to fit more stops), then short transit. Good when you want to pack in as many type-matched venues as possible.
+
+### `balanced` (cluster-first greedy)
+Plans at the metro-station level instead of one attraction at a time.
+
+1. Groups all candidate attractions by `nearestMetroStation` — each station becomes a cluster.
+2. Scores every unvisited cluster as `totalFeasibleValue / (travelTimeToCluster + dwellTimeInCluster)`, where per-attraction value is `BASE + TYPE_MATCH_BONUS if matched`.
+3. Commits to the highest-scoring cluster, visits all feasible attractions there in `value desc, duration asc` order, then moves on.
+4. Repeats until no cluster has any attraction that fits the time window.
+
+Because the balanced strategy operates on the **full** attraction pool (filtered only by budget + accessibility, never by type), a high-efficiency off-type stop — say a free 30-minute coffee shop at a station you're already visiting — can get picked up alongside your preferred types. This is the source of the "natural DC tour" feel: do all the Smithsonian stuff in one go, then move to Capitol Hill, rather than ping-ponging.
+
+### When to pick which
+| Goal | Strategy |
+|---|---|
+| Spend the least time on the metro | `minimize_travel_time` |
+| Hit as many of your preferred venues as possible | `maximize_attractions` |
+| Get a coherent neighborhood-by-neighborhood day with some bonus stops | `balanced` |
+
+---
+
+## Recent Fixes
+
+- **Frontend API client wired up** — `frontend/src/api.js` is now used by `App.jsx` instead of hardcoded `fetch` URLs.
+- **Null-safe opening hours check** — `ScheduleUtils.isOpen` now guards against missing `open`/`close` fields in the JSON instead of throwing `NullPointerException`.
+- **Route-failure fallback** — when a manual-mode metro route lookup fails, the frontend now uses a 15-min estimate and surfaces a warning instead of silently assuming 0 minutes of transit.
+- **Filter-error recovery UI** — if the backend returns "no attractions match", the error banner now shows concrete suggestions (add types, raise budget, extend time window, disable accessibility filter).
 
 ---
 
