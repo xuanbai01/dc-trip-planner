@@ -367,15 +367,6 @@ Because the balanced strategy operates on the **full** attraction pool (filtered
 
 ---
 
-## Recent Fixes
-
-- **Frontend API client wired up** — `frontend/src/api.js` is now used by `App.jsx` instead of hardcoded `fetch` URLs.
-- **Null-safe opening hours check** — `ScheduleUtils.isOpen` now guards against missing `open`/`close` fields in the JSON instead of throwing `NullPointerException`.
-- **Route-failure fallback** — when a manual-mode metro route lookup fails, the frontend now uses a 15-min estimate and surfaces a warning instead of silently assuming 0 minutes of transit.
-- **Filter-error recovery UI** — if the backend returns "no attractions match", the error banner now shows concrete suggestions (add types, raise budget, extend time window, disable accessibility filter).
-
----
-
 ## Known Limitations
 
 - Attraction data is pre-curated and static — no live data or real-time events
