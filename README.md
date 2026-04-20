@@ -1,6 +1,7 @@
 # DC Weekend Trip Planner
 
-A Java-based trip planning application that helps users design optimized half-day to 2-day itineraries in Washington DC. The system generates routes across museums, landmarks, coffee shops, and cinemas — factoring in opening hours, Metro travel time, and user preferences.
+A full-stack trip planning application that generates optimized day-by-day itineraries for Washington DC. Give it a starting Metro station, a time window, your interests, and a budget — and it produces a minute-by-minute schedule that respects opening hours, Metro travel time, and entrance fees.
+
 ![Frontend UI](frontend/src/assets/frontend_sreenshot.png)
 
 ---
@@ -9,10 +10,9 @@ A Java-based trip planning application that helps users design optimized half-da
 
 | Name | Role | Responsibilities |
 |---|---|---|
-| Shawn | Backend | Routing algorithm, itinerary generation, REST API |
-| Xiang | Frontend | React UI, map view, user interaction |
-| Linda | Systems Enhancement | Performance metrics, balanced optimization strategy, and itinerary improvements |
-
+| Shawn | Backend | Dijkstra routing, itinerary generation, REST API |
+| Xiang | Frontend | React UI, Leaflet map, user interaction |
+| Linda | Systems Enhancement | Performance metrics, balanced optimization strategy, budget management |
 
 ---
 
@@ -23,12 +23,12 @@ A Java-based trip planning application that helps users design optimized half-da
 │        React + Vite Frontend         │
 │  [Trip form, attraction picker,      │
 │   Leaflet map, itinerary view]       │
-│       (localhost:5173)               │
+│         localhost:5173               │
 └────────────────┬────────────────────┘
-                 │ HTTP
+                 │ HTTP / JSON
 ┌────────────────▼────────────────────┐
 │         Javalin REST API             │
-│         (localhost:7070)             │
+│           localhost:7070             │
 └────────────────┬────────────────────┘
                  │
 ┌────────────────▼────────────────────┐
@@ -50,12 +50,12 @@ A Java-based trip planning application that helps users design optimized half-da
 | Layer | Technology |
 |---|---|
 | Language | Java 17, JavaScript |
-| Frontend | React + Vite |
+| Frontend | React 19 + Vite |
 | Map | Leaflet + OpenStreetMap |
 | REST Server | Javalin 6 |
 | JSON Parsing | Jackson |
 | Build Tool | Maven |
-| Database | Static JSON files |
+| Data | Static JSON files |
 
 ---
 
@@ -68,46 +68,47 @@ A Java-based trip planning application that helps users design optimized half-da
 git clone https://github.com/xuanbai01/dc-trip-planner.git
 cd dc-trip-planner
 
-# Start backend:
-bashmvn compile
+# Start the backend
+mvn compile
 mvn exec:java -Dexec.mainClass="com.dcplanner.Main"
-Backend starts on http://localhost:7070.
+# Backend starts on http://localhost:7070
 
-#Start frontend
+# In a separate terminal — start the frontend
 cd frontend
 npm install
 npm run dev
-Frontend starts on http://localhost:5173
+# Frontend starts on http://localhost:5173
 ```
 
 ---
 
 ## Features
 
-### Implemented
-backend(Shawn)
+### Backend
 - REST API with 7 endpoints
-- Metro routing via Dijkstra's algorithm on a weighted graph
-- Day-by-day itinerary generation with time blocks
-- Three optimization strategies: minimize travel time, maximize attractions, and balanced (cluster-first greedy that plans one metro station at a time, committing to a region before moving on)
+- Metro routing via Dijkstra's algorithm on a weighted directed graph
+- Day-by-day itinerary generation with minute-level time blocks
+- Three optimization strategies: `minimize_travel_time`, `maximize_attractions`, `balanced`
 - Opening hours validation per day of week
-- Metro fare calculation based on trip distance
-- Cost breakdown: Metro fares + entrance fees
-- Attraction filtering by type, budget, and accessibility (with soft budget overage warnings on planned itineraries)
-- Itinerary responses include execution time, total travel minutes, and attraction count
+- Metro fare calculation based on hop distance
+- Cost breakdown: Metro fares + attraction entrance fees
+- Attraction filtering by type, budget, and accessibility
+- Soft budget warnings instead of hard failures on small overages
+- Performance metrics on each response: planning time, total travel minutes, attraction count
+- Must-include anchors: guarantee specific attractions appear in the itinerary
 - 30 pre-curated DC attractions across 4 categories
 - Input validation and centralized error handling
 
-frontend(Xiang)
-- Trip setup form with station, duration, date, time, and preference selection
-- Interactive attraction picker with type filtering, free-only filter, and accessibility filter
-- Click-to-select attractions with visual feedback and collapsible panel
-- Auto-plan mode (by preferences) and manual mode (by selected attractions)
-- Leaflet map with emoji markers, numbered stops, route polyline, and start station
-- Day-by-day itinerary display with time blocks
+### Frontend
+- Trip form: start station, duration, date, time range, interests, budget, strategy
+- Collapsible attraction picker with type, free-only, and accessibility filters
+- Click to pin specific attractions that must appear in the plan
+- Leaflet map with emoji markers, numbered stops, and route polyline
+- Day-by-day itinerary cards with time blocks, Metro path, and travel time
 - Cost breakdown summary (Metro fares + entrance fees)
 - Auto-scroll to results after planning
-- Responsive design for desktop and mobile
+- Inline error suggestions when filters are too restrictive
+
 ---
 
 ## Project Structure
@@ -121,10 +122,10 @@ dc-trip-planner/
 │    │   ├── java/com/dcplanner/
 │    │   │   ├── Main.java                  # Entry point, server bootstrap
 │    │   │   ├── algorithm/                 # MetroGraph, Dijkstra, MetroFareCalculator
-│    │   │   ├── controller/                # REST route handlers, validation, error handling
+│    │   │   ├── controller/                # REST handlers, validation, error handling
 │    │   │   ├── factory/                   # AttractionFactory (Factory pattern)
-│    │   │   ├── model/                     # POJOs: Attraction, Itinerary, TripRequest, ...
-│    │   │   ├── repository/                # JSON file loaders
+│    │   │   ├── model/                     # POJOs: Attraction, Itinerary, TripRequest
+│    │   │   ├── repository/                # JSON file loaders (Repository pattern)
 │    │   │   ├── service/                   # Business logic layer
 │    │   │   └── strategy/                  # Optimization strategies (Strategy pattern)
 │    │   └── resources/data/
@@ -138,22 +139,66 @@ dc-trip-planner/
 │            ├── factory/                   # AttractionFactoryTest
 │            └── service/                   # TripPlannerServiceTest
 │
-└── frontend/                              
+└── frontend/
     ├── package.json
     ├── vite.config.js
     └── src/
-        ├── App.jsx                        # Main app, state management
+        ├── App.jsx                        # Root component, state management
         ├── App.css                        # Global styles
-        ├── assets/                        # Background image
-        ├── components/
-        │   ├── TripForm.jsx               # Search bar with trip preferences
-        │   ├── AttractionPicker.jsx       # Clickable attraction cards
-        │   ├── MapView.jsx                # Leaflet map with route display
-        │   ├── Itinerary.jsx              # Day-by-day time blocks
-        │   ├── Cost.jsx                   # Cost breakdown
-        │   └── Footer.jsx                 # Credits and links
-        └── api.js                         # Centralized backend API client
+        ├── api.js                         # Centralized backend API client
+        ├── assets/                        # Static images
+        └── components/
+            ├── TripForm.jsx               # Trip preferences form
+            ├── AttractionPicker.jsx       # Filterable, clickable attraction cards
+            ├── MapView.jsx                # Leaflet map with route display
+            ├── Itinerary.jsx              # Day-by-day time blocks
+            ├── Cost.jsx                   # Cost breakdown
+            └── Footer.jsx                 # Credits and links
 ```
+
+---
+
+## Design Patterns
+
+| Pattern | Where | Purpose |
+|---|---|---|
+| **Strategy** | `OptimizationStrategy` interface + 3 implementations | Swap the scheduling algorithm without touching the service layer |
+| **Factory** | `AttractionFactory` | Validate and normalize attraction data in one place |
+| **Repository** | `AttractionRepository`, `MetroRepository` | Isolate JSON file loading from business logic |
+| **MVC** | Controllers / Services / Repositories | Separate HTTP handling, business logic, and data access |
+
+The Strategy pattern is the most architecturally significant: adding a fourth scheduling algorithm requires only one new class implementing `OptimizationStrategy` — no changes to `TripPlannerService` or any other class.
+
+---
+
+## Optimization Strategies
+
+The `optimizationStrategy` field in `/trip/plan` selects how each day is built.
+
+### `minimize_travel_time`
+Greedy nearest-neighbor. At each step, picks the unvisited attraction with the lowest Metro travel time that still fits in the remaining window. Minimizes time spent in transit at the expense of attraction variety.
+
+### `maximize_attractions`
+Greedy by composite score. Each candidate is scored as `typeMatchBonus + durationBonus − travelPenalty`. Favors your preferred attraction types, then shorter-visit venues (to fit more stops in), then nearby stations. Best when you want to pack in as many type-matched venues as possible.
+
+### `balanced` — cluster-first greedy
+Plans at the metro-station level rather than one attraction at a time:
+
+1. Groups all candidate attractions by `nearestMetroStation` — each station becomes a cluster.
+2. Scores every unvisited cluster as `totalFeasibleValue / (travelTimeToCluster + dwellTimeInCluster)`.
+3. Commits to the highest-scoring cluster, visits all feasible attractions there in value-descending order, then moves on to the next cluster.
+4. Repeats until no cluster has an attraction that fits the remaining time window.
+
+This produces a natural neighborhood-by-neighborhood feel — do all the Smithsonian museums in one stretch, then move to Capitol Hill — rather than ping-ponging across the city.
+
+### When to pick which
+
+| Goal | Strategy |
+|---|---|
+| Spend the least time on the Metro | `minimize_travel_time` |
+| Hit as many of your preferred venue types as possible | `maximize_attractions` |
+| Get a coherent neighborhood-by-neighborhood day | `balanced` |
+
 ---
 
 ## Backend API Reference
@@ -172,7 +217,7 @@ List attractions with optional filters.
 |---|---|---|
 | `type` | string | Comma-separated: `museum`, `landmark`, `coffee_shop`, `cinema` |
 | `maxFee` | decimal | Max entrance fee (`0` for free only) |
-| `accessible` | boolean | `true` for accessible attractions only |
+| `accessible` | boolean | `true` for wheelchair-accessible attractions only |
 
 ### `GET /attractions/{id}`
 Get a single attraction by ID.
@@ -183,7 +228,6 @@ List all Metro station IDs.
 ### `GET /metro/route?from={id}&to={id}`
 Shortest Metro route between two stations.
 
-**Response:**
 ```json
 {
   "stations": ["union_station", "metro_center", "smithsonian"],
@@ -206,7 +250,8 @@ Generate a full day-by-day itinerary.
     "types": ["museum", "landmark"],
     "maxBudget": 30.0,
     "accessibilityRequired": false,
-    "optimizationStrategy": "maximize_attractions"
+    "optimizationStrategy": "maximize_attractions",
+    "mustIncludeAttractionIds": ["national_museum_of_natural_history"]
   }
 }
 ```
@@ -215,18 +260,18 @@ Generate a full day-by-day itinerary.
 |---|---|---|
 | `startLocation.metroStation` | yes | Any valid station ID |
 | `tripDuration` | yes | `half_day`, `1_day`, `2_days` |
-| `tripStartDate` | no | `YYYY-MM-DD` — defaults to Saturday if omitted |
+| `tripStartDate` | no | `YYYY-MM-DD` — defaults to the next Saturday if omitted |
 | `availableTimePerDay.start` | yes | `HH:mm` |
 | `availableTimePerDay.end` | yes | `HH:mm` |
 | `preferences.types` | no | `museum`, `landmark`, `coffee_shop`, `cinema` |
 | `preferences.maxBudget` | no | Decimal USD |
 | `preferences.accessibilityRequired` | no | `true` / `false` |
 | `preferences.optimizationStrategy` | no | `minimize_travel_time`, `maximize_attractions`, `balanced` |
+| `preferences.mustIncludeAttractionIds` | no | List of attraction IDs to guarantee in the itinerary |
 
 ### `GET /trip/cost?attractionIds={ids}&startStation={id}`
 Estimate cost for an ordered list of attraction IDs.
 
-**Response:**
 ```json
 {
   "metroFare": 5.70,
@@ -256,119 +301,36 @@ Estimate cost for an ordered list of attraction IDs.
 
 ---
 
-## Design Patterns Used
-
-| Pattern | Where |
-|---|---|
-| **Strategy** | `OptimizationStrategy` — swappable itinerary algorithms |
-| **Factory** | `AttractionFactory` — typed construction and validation of attractions |
-| **MVC** | Controllers handle HTTP, Services handle logic, Repositories handle data |
-| **Observer** | *(planned for frontend itinerary update events)* |
-
----
-
 ## Running Tests
 
 ```bash
 mvn test
 ```
 
-67 unit and integration tests across:
-- `DijkstraTest` — shortest path correctness
-- `MetroFareCalculatorTest` — fare tier logic
-- `AttractionFactoryTest` — validation and normalization
-- `TripRequestValidatorTest` — API input validation
-- `TripPlannerServiceTest` — end-to-end itinerary generation
+67 tests across 5 suites — all passing:
 
----
-## Frontend Reference
-
-### User Flow
-
-1. **Set Preferences** — Top search bar: select start station, 
-   duration, date, time range, attraction types, budget, strategy
-2. **Browse & Select** — Scrollable attraction cards filtered by 
-   selected types. Click to select specific destinations
-3. **Plan Trip** — Two modes:
-   - "Auto Plan": no attractions selected → calls `POST /trip/plan`
-   - "Plan N Places": attractions selected → calls `GET /trip/cost` + `GET /metro/route`
-4. **View Results** — Attraction picker collapses, page scrolls to:
-   - Route map with numbered emoji markers
-   - Day-by-day itinerary with time blocks
-   - Cost breakdown (Metro + entrance fees)
-
-### Components
-
-| Component | File | Purpose |
+| Suite | Tests | What it covers |
 |---|---|---|
-| TripForm | `TripForm.jsx` | Search bar with all trip preferences |
-| AttractionPicker | `AttractionPicker.jsx` | Filterable, clickable attraction cards with collapse/expand |
-| MapView | `MapView.jsx` | Leaflet map with emoji markers, route line, start station |
-| Itinerary | `Itinerary.jsx` | Time blocks showing visit order, travel time, fees |
-| Cost | `Cost.jsx` | Metro fare + entrance fee + total breakdown |
-| Footer | `Footer.jsx` | Credits and GitHub link |
-
-### API Usage by Component
-
-| Component | Endpoint Called | When |
-|---|---|---|
-| TripForm | `GET /metro/stations` | On page load, populates station dropdown |
-| AttractionPicker | `GET /attractions` | On page load, populates attraction cards |
-| App (Auto Plan) | `POST /trip/plan` | User clicks Plan with no specific selections |
-| App (Manual Plan) | `GET /trip/cost` | User clicks Plan with selected attractions |
-| App (Manual Plan) | `GET /metro/route` | Per consecutive stop pair, calculates travel time |
-
-### State Management
-
-| State | Owned By | Shared With |
-|---|---|---|
-| `selectedTypes` | App | TripForm, AttractionPicker |
-| `selectedAttractions` | App | AttractionPicker, MapView |
-| `itinerary` | App | MapView, Itinerary, Cost |
-| `pickerOpen` | App | AttractionPicker |
+| `DijkstraTest` | 9 | Shortest path correctness, disconnected nodes, same-station edge cases |
+| `MetroFareCalculatorTest` | 8 | Fare tier logic across all hop counts |
+| `AttractionFactoryTest` | 14 | Validation and normalization of attraction data |
+| `TripRequestValidatorTest` | 20 | API input validation, invalid durations, bad time formats |
+| `TripPlannerServiceTest` | 16 | End-to-end itinerary generation, budget enforcement, strategy correctness |
 
 ---
 
-## Additional Contributions (Linda)
+## Frontend User Flow
 
-- Added performance metrics on planned trips so you can see how long planning took, total travel time between stops, and how many attractions made the cut.
-- Added a **balanced** optimization mode. Original design ran the travel-time and max-attractions builders side by side and picked the winner by weighted score; it has since been rewritten as a **cluster-first greedy** (see section below) that commits to a metro-station region, visits all feasible attractions there, and then moves on.
-- Relaxed the budget a bit: small overages return a **warning** on the itinerary instead of failing the request, while still blocking plans that blow the budget by too much.
-- Tightened up travel-time numbers in the itinerary by basing segment times on the actual metro path (plus the usual station-to-venue walk estimate) instead of a flat placeholder.
-
----
-
-## Optimization Strategies
-
-The `optimizationStrategy` field in `/trip/plan` selects how the day is built.
-
-### `minimize_travel_time`
-Greedy nearest-neighbor. At each step, picks the unvisited attraction reachable in the least metro travel time that still fits in the window. Ignores attraction type when choosing — it just wants you to spend as few minutes in transit as possible.
-
-### `maximize_attractions`
-Greedy by composite score. Each candidate is scored as `typeMatchBonus + durationBonus − travelPenalty`. Favors your preferred types, then shorter visits (to fit more stops), then short transit. Good when you want to pack in as many type-matched venues as possible.
-
-### `balanced` (cluster-first greedy)
-Plans at the metro-station level instead of one attraction at a time.
-
-1. Groups all candidate attractions by `nearestMetroStation` — each station becomes a cluster.
-2. Scores every unvisited cluster as `totalFeasibleValue / (travelTimeToCluster + dwellTimeInCluster)`, where per-attraction value is `BASE + TYPE_MATCH_BONUS if matched`.
-3. Commits to the highest-scoring cluster, visits all feasible attractions there in `value desc, duration asc` order, then moves on.
-4. Repeats until no cluster has any attraction that fits the time window.
-
-Because the balanced strategy operates on the **full** attraction pool (filtered only by budget + accessibility, never by type), a high-efficiency off-type stop — say a free 30-minute coffee shop at a station you're already visiting — can get picked up alongside your preferred types. This is the source of the "natural DC tour" feel: do all the Smithsonian stuff in one go, then move to Capitol Hill, rather than ping-ponging.
-
-### When to pick which
-| Goal | Strategy |
-|---|---|
-| Spend the least time on the metro | `minimize_travel_time` |
-| Hit as many of your preferred venues as possible | `maximize_attractions` |
-| Get a coherent neighborhood-by-neighborhood day with some bonus stops | `balanced` |
+1. **Set Preferences** — Select start station, duration, date, time range, interests, budget, and optimization strategy in the top form.
+2. **Browse Attractions** — Scrollable attraction cards filtered by selected types. Use the free-only and accessibility toggles to narrow further.
+3. **Pin Specific Stops** — Click any attraction card to pin it. Pinned attractions are guaranteed to appear in the generated itinerary. The rest of the day is filled by the chosen strategy.
+4. **Plan the Trip** — Click "Auto Plan" (no pins) or "Plan Trip (incl. N picks)" (with pins). The system calls `POST /trip/plan` with all preferences.
+5. **View Results** — The picker collapses and the page scrolls to: a route map with numbered markers, day-by-day time blocks, and a cost breakdown.
 
 ---
 
 ## Known Limitations
 
 - Attraction data is pre-curated and static — no live data or real-time events
-- Metro fare uses a simplified distance-based model, not WMATA's exact pricing
+- Metro fare uses a simplified hop-distance model, not WMATA's exact pricing
 - Opening hours are manually entered and may not reflect holiday schedules
