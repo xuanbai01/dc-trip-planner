@@ -192,7 +192,7 @@ export default function TripForm({ onSubmit, loading, selectedTypes, onTypesChan
           disabled={loading || (selectedTypes.length === 0 && selectedCount === 0)}
         >
           {loading ? '⏳ Planning...' :
-           selectedCount > 0 ? `🚀 Plan ${selectedCount} Places` : '🚀 Auto Plan'}
+           selectedCount > 0 ? `🚀 Plan Trip (incl. ${selectedCount} picks)` : '🚀 Auto Plan'}
         </button>
       </div>
     </div>

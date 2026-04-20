@@ -55,6 +55,7 @@ public class TripRequest {
         private double maxBudget;
         private boolean accessibilityRequired;
         private String optimizationStrategy;      // minimize_travel_time | maximize_attractions | balanced
+        private List<String> mustIncludeAttractionIds;  // user-picked attractions that MUST be in day 1
 
         public Preferences() {}
 
@@ -62,10 +63,12 @@ public class TripRequest {
         public double getMaxBudget() { return maxBudget; }
         public boolean isAccessibilityRequired() { return accessibilityRequired; }
         public String getOptimizationStrategy() { return optimizationStrategy; }
+        public List<String> getMustIncludeAttractionIds() { return mustIncludeAttractionIds; }
 
         public void setTypes(List<String> types) { this.types = types; }
         public void setMaxBudget(double maxBudget) { this.maxBudget = maxBudget; }
         public void setAccessibilityRequired(boolean accessibilityRequired) { this.accessibilityRequired = accessibilityRequired; }
         public void setOptimizationStrategy(String optimizationStrategy) { this.optimizationStrategy = optimizationStrategy; }
+        public void setMustIncludeAttractionIds(List<String> mustIncludeAttractionIds) { this.mustIncludeAttractionIds = mustIncludeAttractionIds; }
     }
 }
