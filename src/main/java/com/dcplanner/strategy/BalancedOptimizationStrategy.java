@@ -81,34 +81,65 @@ public class BalancedOptimizationStrategy implements OptimizationStrategy {
         Map<String, List<Attraction>> clusters = candidates.stream()
                 .collect(Collectors.groupingBy(Attraction::getNearestMetroStation));
 
+        // On the very first cluster pick, prefer the starting-station cluster if it
+        // has anything feasible. This honours the user's choice of start location —
+        // without it, every plan gravitates to the densest cluster (Smithsonian) and
+        // the start station barely affects the itinerary. After the first hop, we
+        // revert to pure cluster-first greedy.
+        boolean firstPick = true;
+
         while (true) {
             ClusterChoice best = null;
 
-            for (Map.Entry<String, List<Attraction>> entry : clusters.entrySet()) {
-                String clusterStation = entry.getKey();
-                if (exhaustedClusters.contains(clusterStation)) continue;
-
-                int travelTime = ScheduleUtils.getTravelMinutes(dijkstra, currentStation, clusterStation);
-                if (travelTime == 999) continue; // unreachable
-
-                ClusterChoice choice = evaluateCluster(
-                        entry.getValue(),
+            if (firstPick && clusters.containsKey(currentStation)
+                    && !exhaustedClusters.contains(currentStation)) {
+                ClusterChoice startChoice = evaluateCluster(
+                        clusters.get(currentStation),
                         preferredTypes,
                         dayOfWeek,
                         currentTime,
                         endTime,
-                        travelTime,
-                        clusterStation
+                        0,                 // travel time = 0, we are already here
+                        currentStation
                 );
-
-                if (choice == null) {
-                    // No feasible attraction in this cluster — don't re-check it.
-                    exhaustedClusters.add(clusterStation);
-                    continue;
+                if (startChoice != null) {
+                    best = startChoice;
+                } else {
+                    // Nothing feasible at the start cluster — don't reconsider it.
+                    exhaustedClusters.add(currentStation);
                 }
+            }
+            firstPick = false;
 
-                if (best == null || choice.score > best.score) {
-                    best = choice;
+            // Fall back to normal cluster-first greedy if the start cluster had
+            // nothing (or on every subsequent iteration).
+            if (best == null) {
+                for (Map.Entry<String, List<Attraction>> entry : clusters.entrySet()) {
+                    String clusterStation = entry.getKey();
+                    if (exhaustedClusters.contains(clusterStation)) continue;
+
+                    int travelTime = ScheduleUtils.getTravelMinutes(dijkstra, currentStation, clusterStation);
+                    if (travelTime == 999) continue; // unreachable
+
+                    ClusterChoice choice = evaluateCluster(
+                            entry.getValue(),
+                            preferredTypes,
+                            dayOfWeek,
+                            currentTime,
+                            endTime,
+                            travelTime,
+                            clusterStation
+                    );
+
+                    if (choice == null) {
+                        // No feasible attraction in this cluster — don't re-check it.
+                        exhaustedClusters.add(clusterStation);
+                        continue;
+                    }
+
+                    if (best == null || choice.score > best.score) {
+                        best = choice;
+                    }
                 }
             }
 
