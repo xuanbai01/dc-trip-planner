@@ -37,12 +37,16 @@ public class ScheduleUtils {
      * The attraction must be open before the proposed start and close after the proposed end.
      */
     static boolean isOpen(Attraction attraction, String dayOfWeek, LocalTime proposedStart, LocalTime proposedEnd) {
+        if (attraction.getOpeningHours() == null) return false;
         Attraction.OpeningHours hours = attraction.getOpeningHours().get(dayOfWeek.toLowerCase());
         if (hours == null) return false;
-        if ("closed".equalsIgnoreCase(hours.getOpen())) return false;
+        String openStr = hours.getOpen();
+        String closeStr = hours.getClose();
+        if (openStr == null || closeStr == null) return false;
+        if ("closed".equalsIgnoreCase(openStr)) return false;
 
-        LocalTime open = parseTime(hours.getOpen());
-        LocalTime close = parseTime(hours.getClose());
+        LocalTime open = parseTime(openStr);
+        LocalTime close = parseTime(closeStr);
 
         return !proposedStart.isBefore(open) && !proposedEnd.isAfter(close);
     }

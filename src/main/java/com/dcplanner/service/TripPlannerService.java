@@ -42,15 +42,22 @@ public class TripPlannerService {
         long startTimeMs = System.currentTimeMillis();
         validateRequest(request);
 
-        // 1. Filter candidates based on user preferences
-        List<Attraction> candidates = filterCandidates(request);
+        // 2. Select strategy first — balanced uses a wider candidate pool (see below)
+        OptimizationStrategy strategy = selectStrategy(request);
+        boolean isBalanced = strategy instanceof BalancedOptimizationStrategy;
+
+        // 1. Filter candidates based on user preferences.
+        // Balanced strategy receives the full pool (budget + accessibility only, no type
+        // filter) so its efficiency score can naturally prefer type-matched attractions
+        // while still considering off-type stops that cost almost nothing to include.
+        // The other two strategies receive a type-filtered pool as before.
+        List<Attraction> candidates = isBalanced
+                ? filterCandidatesForBalanced(request)
+                : filterCandidates(request);
 
         if (candidates.isEmpty()) {
             throw new IllegalArgumentException("No attractions match your filters. Try relaxing your preferences.");
         }
-
-        // 2. Select strategy
-        OptimizationStrategy strategy = selectStrategy(request);
 
         // 3. Determine number of days
         int numDays = parseDays(request.getTripDuration());
@@ -122,6 +129,31 @@ public class TripPlannerService {
 
         Double maxFeeFilter = maxBudget == null ? null : maxBudget * (1.0 + BUDGET_SOFT_HEADROOM);
         return attractionRepository.findFiltered(types, maxFeeFilter, accessibilityRequired);
+    }
+
+    /**
+     * Candidate pool for the balanced strategy: no type filter applied.
+     *
+     * Pre-filtering by type causes all candidates to share the same type-match
+     * bonus, making the efficiency score collapse to minimizing travel time —
+     * indistinguishable from MinimizeTravelTimeStrategy. Passing the full pool
+     * lets the TYPE_MATCH_BONUS in BalancedOptimizationStrategy handle preference
+     * ranking while naturally allowing high-efficiency off-type stops (e.g. a free
+     * 30-min coffee shop at the same station between two museums) to be included.
+     */
+    private List<Attraction> filterCandidatesForBalanced(TripRequest request) {
+        TripRequest.Preferences prefs = request.getPreferences();
+
+        Double maxBudget = null;
+        Boolean accessibilityRequired = null;
+
+        if (prefs != null) {
+            maxBudget = prefs.getMaxBudget() > 0 ? prefs.getMaxBudget() : null;
+            accessibilityRequired = prefs.isAccessibilityRequired() ? true : null;
+        }
+
+        Double maxFeeFilter = maxBudget == null ? null : maxBudget * (1.0 + BUDGET_SOFT_HEADROOM);
+        return attractionRepository.findFiltered(null, maxFeeFilter, accessibilityRequired);
     }
 
     private void applyBudgetRules(TripRequest request, Itinerary itinerary) {

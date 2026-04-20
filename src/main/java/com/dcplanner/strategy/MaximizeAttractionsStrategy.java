@@ -80,18 +80,23 @@ public class MaximizeAttractionsStrategy implements OptimizationStrategy {
     private double scoreAttraction(Attraction attraction, List<String> preferredTypes, int travelMinutes) {
         double score = 0;
 
+        // Type match is the dominant signal — always prefer attractions the user asked for
         if (preferredTypes != null && !preferredTypes.isEmpty()) {
             String typeName = attraction.getType().name().toLowerCase();
             if (preferredTypes.stream().anyMatch(t -> t.equalsIgnoreCase(typeName))) {
-                score += 50;
+                score += 60;
             }
         }
 
-        // Prefer shorter visit durations (fit more stops)
-        score += Math.max(0, 120 - attraction.getEstimatedVisitDurationMinutes());
+        // Gentle preference for shorter visits so more stops fit in the day.
+        // Caps at +45 for a 0-min visit; drops to 0 at 90+ min.
+        // This avoids overshadowing type-match: a matched museum still beats
+        // an unmatched coffee shop (60 + 0 - penalty vs 0 + 30 - penalty).
+        score += Math.max(0, (90 - attraction.getEstimatedVisitDurationMinutes()) * 0.5);
 
-        // Penalize long travel
-        score -= travelMinutes * 0.5;
+        // Stronger travel penalty so nearby stops are meaningfully preferred
+        // over distant ones (was 0.5 — too weak to matter at ~10 min walks).
+        score -= travelMinutes * 1.5;
 
         return score;
     }

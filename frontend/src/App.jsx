@@ -5,6 +5,7 @@ import Itinerary from './components/Itinerary'
 import MapView from './components/MapView'
 import Cost from './components/Cost'
 import Footer from './components/Footer'
+import { getTripCost, getMetroRoute, planTrip } from './api'
 import './App.css'
 
 function timeToMinutes(timeStr) {
@@ -46,29 +47,25 @@ function App() {
     setError(null)
     try {
       if (selectedAttractions.length > 0) {
-        const ids = selectedAttractions.map(a => a.id).join(',')
+        const ids = selectedAttractions.map(a => a.id)
         const station = tripRequest.startLocation.metroStation
 
-        const costRes = await fetch(
-          `http://localhost:7070/trip/cost?attractionIds=${ids}&startStation=${station}`
-        )
-        if (!costRes.ok) {
-          const err = await costRes.json()
-          throw new Error(err.error || 'Failed to estimate cost')
-        }
-        const costData = await costRes.json()
+        const costData = await getTripCost(ids, station)
 
         const stops = [station, ...selectedAttractions.map(a => a.nearestMetroStation)]
         const routes = []
+        const routeWarnings = []
         for (let i = 0; i < stops.length - 1; i++) {
           if (stops[i] !== stops[i + 1]) {
-            const routeRes = await fetch(
-              `http://localhost:7070/metro/route?from=${stops[i]}&to=${stops[i + 1]}`
-            )
-            if (routeRes.ok) {
-              routes.push(await routeRes.json())
-            } else {
-              routes.push({ travelTimeMinutes: 0, fare: 0 })
+            try {
+              routes.push(await getMetroRoute(stops[i], stops[i + 1]))
+            } catch {
+              // Route lookup failed — fall back to a 15-min estimate rather than
+              // silently using 0 which would make time-window checks unreliable.
+              routes.push({ travelTimeMinutes: 15, fare: 0, estimated: true })
+              routeWarnings.push(
+                `Could not calculate route from ${stops[i]} to ${stops[i + 1]} — using 15-min estimate`
+              )
             }
           } else {
             routes.push({ travelTimeMinutes: 0, fare: 0, stations: [] })
@@ -114,20 +111,12 @@ function App() {
           totalAttractions: timeBlocks.length,
           totalTravelTimeMinutes: totalTravelMin,
           skippedMessage: skipped.length > 0
-            ? `⚠️ Not enough time for: ${skipped.join(', ')}`
-            : null
+            ? `Not enough time for: ${skipped.join(', ')}`
+            : null,
+          warnings: routeWarnings
         })
       } else {
-        const response = await fetch('http://localhost:7070/trip/plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(tripRequest)
-        })
-        if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.error || 'Failed to plan trip')
-        }
-        const data = await response.json()
+        const data = await planTrip(tripRequest)
         data.startStation = tripRequest.startLocation.metroStation
         setItinerary(data)
       }
@@ -169,7 +158,19 @@ function App() {
         onToggleOpen={() => setPickerOpen(!pickerOpen)}
       />
 
-      {error && <div className="error-banner">{error}</div>}
+      {error && (
+        <div className="error-banner">
+          <p>{error}</p>
+          {/no attractions match|match your filters/i.test(error) && (
+            <ul className="filter-suggestions">
+              <li>Select additional attraction types using the chips above</li>
+              <li>Increase your budget slider</li>
+              <li>Extend your available time window (earlier start or later end)</li>
+              <li>Uncheck "Accessibility only" if it is enabled</li>
+            </ul>
+          )}
+        </div>
+      )}
 
       <div ref={resultsRef}>
         {itinerary?.skippedMessage && (
