@@ -16,9 +16,22 @@ const formatStation = (id) =>
 export default function Itinerary({ itinerary }) {
   if (!itinerary || !itinerary.days) return null
 
+  const totalTravel = itinerary.totalTravelTimeMinutes
+  const execMs = itinerary.executionTimeMs
+
   return (
     <div className="itinerary-section">
-      <h2>📋 Your Itinerary ({itinerary.totalAttractions || ''} stops)</h2>
+      <h2>📋 Your Itinerary ({itinerary.totalAttractions || 0} stops)</h2>
+      {(totalTravel > 0 || execMs > 0) && (
+        <div className="itinerary-metrics">
+          {totalTravel > 0 && (
+            <span className="metric-chip">🚇 {totalTravel} min total travel</span>
+          )}
+          {execMs > 0 && (
+            <span className="metric-chip">⚡ Planned in {execMs} ms</span>
+          )}
+        </div>
+      )}
       {itinerary.days.map((day, dayIndex) => (
         <div key={dayIndex} className="day-card">
           <h3>

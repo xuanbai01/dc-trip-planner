@@ -15,7 +15,8 @@ const ATTRACTION_TYPES = [
 
 const STRATEGIES = [
   { value: 'maximize_attractions', label: 'See More Places' },
-  { value: 'minimize_travel_time', label: 'Less Travel Time' }
+  { value: 'minimize_travel_time', label: 'Less Travel Time' },
+  { value: 'balanced', label: 'Balanced' }
 ]
 
 export default function TripForm({ onSubmit, loading, selectedTypes, onTypesChange, selectedCount }) {

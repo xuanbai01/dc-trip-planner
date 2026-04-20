@@ -79,6 +79,7 @@ function App() {
         const endLimit = timeToMinutes(tripRequest.availableTimePerDay.end)
         const timeBlocks = []
         const skipped = []
+        let totalTravelMin = 0
 
         selectedAttractions.forEach((a, i) => {
           const travelMin = routes[i]?.travelTimeMinutes || 0
@@ -100,6 +101,7 @@ function App() {
             entranceFee: a.entranceFee,
             nearestStation: a.nearestMetroStation
           })
+          totalTravelMin += travelMin
           currentTime = minutesToTime(endMin)
         })
 
@@ -110,6 +112,7 @@ function App() {
           attractions: selectedAttractions.filter(a => !skipped.includes(a.name)),
           startStation: station,
           totalAttractions: timeBlocks.length,
+          totalTravelTimeMinutes: totalTravelMin,
           skippedMessage: skipped.length > 0
             ? `⚠️ Not enough time for: ${skipped.join(', ')}`
             : null
@@ -172,6 +175,9 @@ function App() {
         {itinerary?.skippedMessage && (
           <div className="warning-banner">{itinerary.skippedMessage}</div>
         )}
+        {itinerary?.warnings?.length > 0 && itinerary.warnings.map((w, i) => (
+          <div key={i} className="warning-banner">⚠️ {w}</div>
+        ))}
         {itinerary && (
           <>
             <MapView itinerary={itinerary} />
