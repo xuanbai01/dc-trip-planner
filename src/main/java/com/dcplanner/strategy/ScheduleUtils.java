@@ -61,7 +61,7 @@ public class ScheduleUtils {
         if (route != null && route.isFound()) {
             travel = new Itinerary.TravelInfo(
                     route.getStationPath(),
-                    WALKING_MINUTES_PER_STOP,
+                    route.getTotalTravelTimeMinutes() + WALKING_MINUTES_PER_STOP,
                     route.getTotalFare()
             );
         }

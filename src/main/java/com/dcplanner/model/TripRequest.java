@@ -54,7 +54,7 @@ public class TripRequest {
         private List<String> types;               // ["museum", "coffee_shop"]
         private double maxBudget;
         private boolean accessibilityRequired;
-        private String optimizationStrategy;      // "minimize_travel_time" | "maximize_attractions"
+        private String optimizationStrategy;      // minimize_travel_time | maximize_attractions | balanced
 
         public Preferences() {}
 

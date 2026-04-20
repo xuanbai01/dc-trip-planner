@@ -118,6 +118,24 @@ class TripPlannerServiceTest {
         assertEquals(sumOfStops, itinerary.getTotalAttractions());
     }
 
+    @Test
+    void slightBudgetOverrun_addsWarning() {
+        TripRequest request = buildRequest("1_day", "minimize_travel_time", List.of("museum"));
+        request.getPreferences().setMaxBudget(500);
+        double cost = tripPlannerService.planTrip(request).getTotalCost();
+        request.getPreferences().setMaxBudget(cost - 1.0);
+        Itinerary itinerary = tripPlannerService.planTrip(request);
+        assertTrue(itinerary.getTotalCost() > request.getPreferences().getMaxBudget());
+        assertTrue(itinerary.getWarnings().stream().anyMatch(w -> w.startsWith("Budget exceeded")));
+    }
+
+    @Test
+    void largeBudgetOverrun_throws() {
+        TripRequest request = buildRequest("2_days", "maximize_attractions", List.of("museum", "landmark"));
+        request.getPreferences().setMaxBudget(1.0);
+        assertThrows(IllegalArgumentException.class, () -> tripPlannerService.planTrip(request));
+    }
+
     // --- Strategy differences ---
 
     @Test
@@ -130,6 +148,13 @@ class TripPlannerServiceTest {
     @Test
     void minimizeTravelTime_producesAtLeastOneStop() {
         TripRequest request = buildRequest("1_day", "minimize_travel_time", List.of("museum"));
+        Itinerary itinerary = tripPlannerService.planTrip(request);
+        assertTrue(itinerary.getTotalAttractions() > 0);
+    }
+
+    @Test
+    void balanced_producesAtLeastOneStop() {
+        TripRequest request = buildRequest("1_day", "balanced", List.of("museum"));
         Itinerary itinerary = tripPlannerService.planTrip(request);
         assertTrue(itinerary.getTotalAttractions() > 0);
     }
